@@ -198,7 +198,7 @@ def np2video(np, *a, **kw):
             yield fr
     return frames_to_video(vgen(), *a, **kw)
 
-def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0):
+def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0, ffopts=[]):
     # XXX: endianness EEK
     # TODO: detect platform endianness & adjust ffmpeg params accordingly
 
@@ -210,7 +210,7 @@ def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0):
            '-ar', str(R), 
            '-ac', str(nchannels), 
            '-f', 's16le',
-           '-acodec', 'pcm_s16le',
+           '-acodec', 'pcm_s16le'] + ffopts + [
            '-']
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=open('/dev/null', 'w'))
     frsize = 2*nchannels*chunksize
@@ -220,6 +220,8 @@ def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0):
         yield out
 
         if len(out) < chunksize:
+            # Make sure the process ends
+            p.wait()
             return
 
 def sound2np(path, **kw):
