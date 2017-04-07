@@ -75,6 +75,14 @@ def _video_info(stderr):
     if ar_match:
         out["audiorate"] = int(ar_match.groups()[0])
 
+    ch_match_1 = re.search(r'[^\d](\d+) channels,', stderr)
+    if ch_match_1:
+        out["nchannels"] = int(ch_match_1.groups()[0])
+    elif 'stereo,' in stderr:
+        out["nchannels"] = 2
+    elif 'mono,' in stderr:
+        out["nchannels"] = 1
+
     wh_match = re.search(r'Stream .*[^\d](\d\d+)x(\d\d+)[^\d]', stderr)
     if wh_match:
         w,h = [int(x) for x in wh_match.groups()]
@@ -198,15 +206,15 @@ def np2video(np, *a, **kw):
             yield fr
     return frames_to_video(vgen(), *a, **kw)
 
-def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0, ffopts=[]):
+def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0, duration=None, ffopts=[]):
     # XXX: endianness EEK
     # TODO: detect platform endianness & adjust ffmpeg params accordingly
 
-    cmd = [FFMPEG, 
-           '-ss', "%f" % (start), 
-           '-i', path, 
-           '-ss', "%f" % (start), 
-           '-vn',
+    cmd = [FFMPEG] + \
+          (['-ss', "%f" % (start)] if start else []) + \
+          ['-i', path] + \
+          (['-t', "%f" % (duration)] if duration else []) + \
+          ['-vn',
            '-ar', str(R), 
            '-ac', str(nchannels), 
            '-f', 's16le',
