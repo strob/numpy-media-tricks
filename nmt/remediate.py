@@ -1,6 +1,8 @@
+from __future__ import print_function
+from __future__ import absolute_import
 # If run from a file, watch it (the file) for changes
 
-import mediate
+from . import mediate
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -9,9 +11,9 @@ import sys
 import traceback
 
 def _load_module(path, g={}):
-    source = file(path).read()
+    source = open(path).read()
     code = compile(source, path, 'exec')
-    exec code in g
+    exec(code, g)
     return g
 
 class Ev2CB(FileSystemEventHandler):
@@ -20,7 +22,7 @@ class Ev2CB(FileSystemEventHandler):
         FileSystemEventHandler.__init__(self)
 
     def get_cb(self, ev):
-        print 'get_cb', ev.src_path, ev
+        print('get_cb', ev.src_path, ev)
         for path in self.pathmap.keys():
             if os.path.abspath(ev.src_path) == os.path.abspath(path):
                 return self.pathmap[path]
@@ -86,7 +88,7 @@ def run(path, g={}, **kw):
     run = HotPluggableUI(**kw)
 
     def load():
-        print 'load!'
+        print('load!')
         g['self'] = run
         try:
             module = _load_module(path, g=g)
@@ -109,7 +111,7 @@ def run(path, g={}, **kw):
 
 def onload(run, path, g):
     def load():
-        print 'load!', path
+        print('load!', path)
         g['self'] = run
         module = _load_module(path, g=g)
         for k,v in module.items():
@@ -132,15 +134,15 @@ def multi_run(ns):
 
     obs = Observer()
     e2cb = Ev2CB(cbs)
-    dirpath = os.path.dirname(os.path.abspath(cbs.keys()[0]))
-    print 'dirpath', dirpath
+    dirpath = os.path.dirname(os.path.abspath(list(cbs.keys())[0]))
+    print('dirpath', dirpath)
     obs.schedule(e2cb, dirpath)
     obs.start()
 
     try:
         mediate.multi_run(uis)
     except KeyboardInterrupt:
-        print 'interrupt...'
+        print('interrupt...')
     finally:
         obs.stop()
     obs.join()
