@@ -1,0 +1,4 @@
+PySDL2
+numpy
+Pillow
+watchdog
