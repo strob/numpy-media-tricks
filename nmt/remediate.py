@@ -1,11 +1,15 @@
 # If run from a file, watch it (the file) for changes
 
+import media
 import mediate
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+import numpy as np
 import os
+import subprocess
 import sys
+import tempfile
 import traceback
 
 def _load_module(path, g={}):
@@ -153,3 +157,73 @@ def multi_run_static(ns):
         uis.append(run)
         onload(run, path, g)()
     mediate.multi_run(uis)
+
+def render(path, out_path, duration, g={}, **kw):
+    kw['nowindow']= True
+    
+    run = HotPluggableUI(**kw)
+    def load():
+        print 'load!'
+        g['self'] = run
+        try:
+            module = _load_module(path, g=g)
+        except Exception:
+            traceback.print_exc()
+            return
+
+        for k,v in module.items():
+            run.cbs[k] = print_errors(v)
+
+    load()
+
+    # TODO: expose
+    FPS = 30
+    R = 44100
+    CHUNK_LEN = R / FPS         # XXX: integer assert?
+    audio_chunks = []
+    nframes = int(duration * FPS)
+
+    v_frame_writer = None
+    a_frame_writer = None
+
+    with tempfile.NamedTemporaryFile(suffix='.%s' % (out_path.split('.')[-1])) as v_fh:
+        with tempfile.NamedTemporaryFile(suffix='.wav') as a_fh:
+
+            for idx in range(nframes):
+                if idx % 30 == 0:
+                    print idx, nframes
+
+                v_fr = np.zeros((run.size[1], run.size[0], 3), dtype=np.uint8)
+                a_fr = np.zeros((CHUNK_LEN, 2), dtype=np.int16)
+                
+                if v_frame_writer is None:
+                    v_frame_writer = media.frame_writer(v_fr, v_fh.name, fps=FPS)
+                if a_frame_writer is None:
+                    a_frame_writer = media.chunk_writer(a_fr, a_fh.name, R=R)
+
+                run.video_out(v_fr)
+                run.audio_out(a_fr)
+
+                v_frame_writer.stdin.write(v_fr[:,:,(2,1,0)].tostring())
+                a_frame_writer.stdin.write(a_fr.tostring())
+
+            print 'closing'
+            v_frame_writer.stdin.close()
+            a_frame_writer.stdin.close()
+            print 'closed! - waiting'            
+                
+            v_frame_writer.wait()
+            a_frame_writer.wait()
+
+            # Merge files
+            # TODO: expose in media.py
+            subprocess.call([media.FFMPEG,
+                             '-y',
+                             '-i', v_fh.name,
+                             '-i', a_fh.name,
+                             '-map', '0:v', '-map', '1:a',
+                             '-c:v', 'copy',
+                             '-strict', '-2',
+                             '-b:a', '192k',
+                             '-movflags', 'faststart', # XXX: will this break on non-mp4's?
+                             out_path])

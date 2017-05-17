@@ -30,6 +30,6 @@ except ImportError:
     print "livecoding not available"
 
 try:
-    from remediate import run, multi_run
+    from remediate import run, multi_run, render
 except ImportError:
     print "recoding not available"
