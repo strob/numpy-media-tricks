@@ -1,17 +1,23 @@
+from __future__ import print_function
+from __future__ import absolute_import
 # If run from a file, watch it (the file) for changes
 
-import mediate
+from . import media
+from . import mediate
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+import numpy as np
 import os
+import subprocess
 import sys
+import tempfile
 import traceback
 
 def _load_module(path, g={}):
-    source = file(path).read()
+    source = open(path).read()
     code = compile(source, path, 'exec')
-    exec code in g
+    exec(code, g)
     return g
 
 class Ev2CB(FileSystemEventHandler):
@@ -20,7 +26,7 @@ class Ev2CB(FileSystemEventHandler):
         FileSystemEventHandler.__init__(self)
 
     def get_cb(self, ev):
-        print 'get_cb', ev.src_path, ev
+        print('get_cb', ev.src_path, ev)
         for path in self.pathmap.keys():
             if os.path.abspath(ev.src_path) == os.path.abspath(path):
                 return self.pathmap[path]
@@ -86,7 +92,7 @@ def run(path, g={}, **kw):
     run = HotPluggableUI(**kw)
 
     def load():
-        print 'load!'
+        print('load!')
         g['self'] = run
         try:
             module = _load_module(path, g=g)
@@ -109,7 +115,7 @@ def run(path, g={}, **kw):
 
 def onload(run, path, g):
     def load():
-        print 'load!', path
+        print('load!', path)
         g['self'] = run
         module = _load_module(path, g=g)
         for k,v in module.items():
@@ -132,15 +138,15 @@ def multi_run(ns):
 
     obs = Observer()
     e2cb = Ev2CB(cbs)
-    dirpath = os.path.dirname(os.path.abspath(cbs.keys()[0]))
-    print 'dirpath', dirpath
+    dirpath = os.path.dirname(os.path.abspath(list(cbs.keys())[0]))
+    print('dirpath', dirpath)
     obs.schedule(e2cb, dirpath)
     obs.start()
 
     try:
         mediate.multi_run(uis)
     except KeyboardInterrupt:
-        print 'interrupt...'
+        print('interrupt...')
     finally:
         obs.stop()
     obs.join()
@@ -153,3 +159,67 @@ def multi_run_static(ns):
         uis.append(run)
         onload(run, path, g)()
     mediate.multi_run(uis)
+
+def render(path, out_path, duration, g={}, **kw):
+    kw['nowindow']= True
+    
+    run = HotPluggableUI(**kw)
+    def load():
+        g['self'] = run
+        try:
+            module = _load_module(path, g=g)
+        except Exception:
+            traceback.print_exc()
+            return
+
+        for k,v in module.items():
+            run.cbs[k] = print_errors(v)
+
+    load()
+
+    # TODO: expose
+    FPS = 30
+    R = 44100
+    CHUNK_LEN = R / FPS         # XXX: integer assert?
+    audio_chunks = []
+    nframes = int(duration * FPS)
+
+    v_frame_writer = None
+    a_frame_writer = None
+
+    with tempfile.NamedTemporaryFile(suffix='.%s' % (out_path.split('.')[-1])) as v_fh:
+        with tempfile.NamedTemporaryFile(suffix='.wav') as a_fh:
+
+            for idx in range(nframes):
+                v_fr = np.zeros((run.size[1], run.size[0], 3), dtype=np.uint8)
+                a_fr = np.zeros((CHUNK_LEN, 2), dtype=np.int16)
+                
+                if v_frame_writer is None:
+                    v_frame_writer = media.frame_writer(v_fr, v_fh.name, fps=FPS)
+                if a_frame_writer is None:
+                    a_frame_writer = media.chunk_writer(a_fr, a_fh.name, R=R)
+
+                run.video_out(v_fr)
+                run.audio_out(a_fr)
+
+                v_frame_writer.stdin.write(v_fr[:,:,(2,1,0)].tostring())
+                a_frame_writer.stdin.write(a_fr.tostring())
+
+            v_frame_writer.stdin.close()
+            a_frame_writer.stdin.close()
+                
+            v_frame_writer.wait()
+            a_frame_writer.wait()
+
+            # Merge files
+            # TODO: expose in media.py
+            subprocess.call([media.FFMPEG,
+                             '-y',
+                             '-i', v_fh.name,
+                             '-i', a_fh.name,
+                             '-map', '0:v', '-map', '1:a',
+                             '-c:v', 'copy',
+                             '-strict', '-2',
+                             '-b:a', '192k',
+                             '-movflags', 'faststart', # XXX: will this break on non-mp4's?
+                             out_path])

@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 # pysdl2-based numm api
 
 import numpy as np
 import sdl2
 import sdl2.ext                 # Maybe I shouldn't use `ext'?
 
-from media import FFMPEG, _video_info, webcam_reader
+from .media import FFMPEG, _video_info, webcam_reader
 import subprocess
 
 KEYMAP = dict([(getattr(sdl2, X), X.split("_")[-1]) for X in dir(sdl2) if X.startswith("SDLK_")])
@@ -18,6 +19,7 @@ class ArrayUI:
                  name="numpy-media-tricks",
                  R=44100, nchannels=2, chunksize=1024,
                  webcam="", spoof_webcam=None,
+                 nowindow=False,
                  fullscreen=False):
         self.size = size
         self.in_size = in_size
@@ -29,15 +31,16 @@ class ArrayUI:
         self.spoof_webcam = spoof_webcam
         self.fullscreen = fullscreen
 
-        if hasattr(self, "video_out"):
-            self._init_video()
-        if hasattr(self, "audio_out"):
-            self._init_audio()
-        if hasattr(self, "video_in"):
-            if self.spoof_webcam is not None:
-                self._init_spoof_video_in()
-            else:
-                self._init_video_in()
+        if not nowindow:
+            if hasattr(self, "video_out"):
+                self._init_video()
+            if hasattr(self, "audio_out"):
+                self._init_audio()
+            if hasattr(self, "video_in"):
+                if self.spoof_webcam is not None:
+                    self._init_spoof_video_in()
+                else:
+                    self._init_video_in()
 
     def _init_video(self):
         sdl2.ext.init()
