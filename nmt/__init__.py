@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 __all__ = (
     'media',
     'mediate',
@@ -6,7 +8,7 @@ __all__ = (
 )
 
 FFMPEG = 'ffmpeg'               # system FFMpeg
-from media import (
+from .media import (
     video_info,
     frame_reader,
     video_frames,
@@ -25,11 +27,11 @@ from media import (
     np2sound)
 
 try:
-    from mediate import ArrayUI
+    from .mediate import ArrayUI
 except ImportError:
-    print "livecoding not available"
+    print("livecoding not available")
 
 try:
-    from remediate import run, multi_run, render
+    from .remediate import run, multi_run, render
 except ImportError:
-    print "recoding not available"
+    print("recoding not available")

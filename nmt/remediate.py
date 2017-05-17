@@ -1,7 +1,9 @@
+from __future__ import print_function
+from __future__ import absolute_import
 # If run from a file, watch it (the file) for changes
 
-import media
-import mediate
+from . import media
+from . import mediate
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -13,9 +15,9 @@ import tempfile
 import traceback
 
 def _load_module(path, g={}):
-    source = file(path).read()
+    source = open(path).read()
     code = compile(source, path, 'exec')
-    exec code in g
+    exec(code, g)
     return g
 
 class Ev2CB(FileSystemEventHandler):
@@ -24,7 +26,7 @@ class Ev2CB(FileSystemEventHandler):
         FileSystemEventHandler.__init__(self)
 
     def get_cb(self, ev):
-        print 'get_cb', ev.src_path, ev
+        print('get_cb', ev.src_path, ev)
         for path in self.pathmap.keys():
             if os.path.abspath(ev.src_path) == os.path.abspath(path):
                 return self.pathmap[path]
@@ -90,7 +92,7 @@ def run(path, g={}, **kw):
     run = HotPluggableUI(**kw)
 
     def load():
-        print 'load!'
+        print('load!')
         g['self'] = run
         try:
             module = _load_module(path, g=g)
@@ -113,7 +115,7 @@ def run(path, g={}, **kw):
 
 def onload(run, path, g):
     def load():
-        print 'load!', path
+        print('load!', path)
         g['self'] = run
         module = _load_module(path, g=g)
         for k,v in module.items():
@@ -136,15 +138,15 @@ def multi_run(ns):
 
     obs = Observer()
     e2cb = Ev2CB(cbs)
-    dirpath = os.path.dirname(os.path.abspath(cbs.keys()[0]))
-    print 'dirpath', dirpath
+    dirpath = os.path.dirname(os.path.abspath(list(cbs.keys())[0]))
+    print('dirpath', dirpath)
     obs.schedule(e2cb, dirpath)
     obs.start()
 
     try:
         mediate.multi_run(uis)
     except KeyboardInterrupt:
-        print 'interrupt...'
+        print('interrupt...')
     finally:
         obs.stop()
     obs.join()
@@ -163,7 +165,6 @@ def render(path, out_path, duration, g={}, **kw):
     
     run = HotPluggableUI(**kw)
     def load():
-        print 'load!'
         g['self'] = run
         try:
             module = _load_module(path, g=g)
@@ -190,9 +191,6 @@ def render(path, out_path, duration, g={}, **kw):
         with tempfile.NamedTemporaryFile(suffix='.wav') as a_fh:
 
             for idx in range(nframes):
-                if idx % 30 == 0:
-                    print idx, nframes
-
                 v_fr = np.zeros((run.size[1], run.size[0], 3), dtype=np.uint8)
                 a_fr = np.zeros((CHUNK_LEN, 2), dtype=np.int16)
                 
@@ -207,10 +205,8 @@ def render(path, out_path, duration, g={}, **kw):
                 v_frame_writer.stdin.write(v_fr[:,:,(2,1,0)].tostring())
                 a_frame_writer.stdin.write(a_fr.tostring())
 
-            print 'closing'
             v_frame_writer.stdin.close()
             a_frame_writer.stdin.close()
-            print 'closed! - waiting'            
                 
             v_frame_writer.wait()
             a_frame_writer.wait()

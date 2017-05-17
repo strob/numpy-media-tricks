@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 # pysdl2-based numm api
 
 import numpy as np
 import sdl2
 import sdl2.ext                 # Maybe I shouldn't use `ext'?
 
-from media import FFMPEG, _video_info, webcam_reader
+from .media import FFMPEG, _video_info, webcam_reader
 import subprocess
 
 KEYMAP = dict([(getattr(sdl2, X), X.split("_")[-1]) for X in dir(sdl2) if X.startswith("SDLK_")])
