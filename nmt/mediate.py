@@ -36,6 +36,8 @@ class ArrayUI:
                 self._init_video()
             if hasattr(self, "audio_out"):
                 self._init_audio()
+            if hasattr(self, "audio_in"):
+                self._init_mic()
             if hasattr(self, "video_in"):
                 if self.spoof_webcam is not None:
                     self._init_spoof_video_in()
@@ -54,6 +56,15 @@ class ArrayUI:
         sdl2.SDL_SetWindowFullscreen(self._win.window, sdl2.SDL_WINDOW_FULLSCREEN_DESKTOP)
     def leave_fullscreen(self):
         sdl2.SDL_SetWindowFullscreen(self._win.window, 0)
+
+    def _init_mic(self):
+        import pyaudio
+        p = pyaudio.PyAudio()
+        self._mic = p.open(format=pyaudio.paInt16,
+                           channels=1,
+                           rate=self.R,
+                           input=True,
+                           frames_per_buffer=self.chunksize)
 
     def _init_video_in(self):
         w, h = (None, None)
@@ -84,6 +95,12 @@ class ArrayUI:
         return in_fr
 
     def _handle_audio_cb(self, _udata, cbuf, N):
+        # Read from mic
+        if hasattr(self, "audio_in"):
+            in_buf = np.fromstring(self._mic.read(self.chunksize), dtype=np.int16)
+            self.audio_in(in_buf)
+
+        # ...and output
         arr = np.ctypeslib.as_array(cbuf, shape=(N,)).view(np.int16)
         if self.nchannels > 1:
             arr.shape = (-1,self.nchannels)

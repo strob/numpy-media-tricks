@@ -74,6 +74,9 @@ class HotPluggableUI(mediate.ArrayUI):
         if not self._do_thing("audio_out", a):
             a[:] = 0
 
+    def audio_in(self, a):
+        self._do_thing("audio_in", a)
+            
     def mouse_in(self, *a):
         self._do_thing("mouse_in", *a)
     def keyboard_in(self, *a):
