@@ -1,13 +1,18 @@
-from __future__ import print_function
 from __future__ import absolute_import
+
+import logging
+
 __all__ = (
     'media',
     'mediate',
     'remediate',
-    'FFMPEG'
+    'get_ffmpeg'
 )
 
 FFMPEG = 'ffmpeg'               # system FFMpeg
+def get_ffmpeg():
+    return FFMPEG
+
 from .media import (
     video_info,
     frame_reader,
@@ -29,9 +34,9 @@ from .media import (
 try:
     from .mediate import ArrayUI
 except ImportError:
-    print("livecoding not available")
+    logging.info("livecoding not available")
 
 try:
     from .remediate import run, multi_run, render
 except ImportError:
-    print("recoding not available")
+    logging.info("recoding not available")

@@ -1,12 +1,10 @@
-from __future__ import print_function
-from __future__ import absolute_import
 from PIL import Image
 import numpy as np
 import subprocess
 import re
 import sys
 
-FFMPEG = "ffmpeg"
+from . import get_ffmpeg# = "ffmpeg"
 
 def image2np(path):
     "Load an image file into an array."
@@ -106,7 +104,7 @@ def _video_info(stderr):
     return out
 
 def video_info(path, preamble=[]):
-    cmd = [FFMPEG] + preamble + ['-i', path]
+    cmd = [get_ffmpeg()] + preamble + ['-i', path]
     p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
 
@@ -129,15 +127,15 @@ def _infer_size(path, width, height, preamble=[]):
 
     return (width, height)
 
-def frame_reader(path, height=None, width=None, start=None, duration=None, fps=30, colororder='rgb', bitrate='24', preamble=[]):
+def frame_reader(path, height=None, width=None, start=0, fps=30, colororder='rgb', bitrate='24', preamble=[]):
     # low-level ffmpeg wrapper
     width, height = _infer_size(path, width, height, preamble=preamble)
 
-    cmd = [FFMPEG] + preamble + \
-          (['-ss', "%f" % (start)] if start else []) + \
-          ['-i', path] + \
-          (['-t', "%f" % (duration)] if duration else []) + \
-          ['-vf', 'scale=%d:%d'%(width,height),
+    cmd = [get_ffmpeg()] + preamble + [
+           '-ss', "%f" % (start),
+           '-i', path, 
+           '-ss', "%f" % (start),
+           '-vf', 'scale=%d:%d'%(width,height),
            '-r', str(fps),
            '-an',
            '-vcodec', 'rawvideo', '-f', 'rawvideo',
@@ -183,7 +181,7 @@ def video2np(path, **kw):
 
 def frame_writer(first_frame, path, fps=30, ffopts=[]):
     fr = first_frame
-    cmd =[FFMPEG, '-y', '-s', '%dx%d' % (fr.shape[1], fr.shape[0]),
+    cmd =[get_ffmpeg(), '-y', '-s', '%dx%d' % (fr.shape[1], fr.shape[0]),
           '-r', str(fps), 
           '-an',
           '-pix_fmt', 'rgb24',
@@ -208,15 +206,15 @@ def np2video(np, *a, **kw):
             yield fr
     return frames_to_video(vgen(), *a, **kw)
 
-def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0, duration=None, ffopts=[]):
+def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0, ffopts=[]):
     # XXX: endianness EEK
     # TODO: detect platform endianness & adjust ffmpeg params accordingly
 
-    cmd = [FFMPEG] + \
-          (['-ss', "%f" % (start)] if start else []) + \
-          ['-i', path] + \
-          (['-t', "%f" % (duration)] if duration else []) + \
-          ['-vn',
+    cmd = [get_ffmpeg(), 
+           '-ss', "%f" % (start), 
+           '-i', path, 
+           '-ss', "%f" % (start), 
+           '-vn',
            '-ar', str(R), 
            '-ac', str(nchannels), 
            '-f', 's16le',
@@ -242,7 +240,7 @@ def sound2np(path, **kw):
 
 def chunk_writer(first_chunk, path, R=44100, ffopts=[]):
     nchannels = first_chunk.shape[1] if len(first_chunk.shape) > 1 else 1
-    cmd =[FFMPEG, '-y',
+    cmd =[get_ffmpeg(), '-y',
           '-vn',
           '-ar', str(R),
           '-ac', str(nchannels),
