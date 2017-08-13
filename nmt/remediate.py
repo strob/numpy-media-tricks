@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 # If run from a file, watch it (the file) for changes
 
+from . import get_ffmpeg
 from . import media
 from . import mediate
 from watchdog.observers import Observer
@@ -163,7 +164,7 @@ def multi_run_static(ns):
         onload(run, path, g)()
     mediate.multi_run(uis)
 
-def render(path, out_path, duration, g={}, **kw):
+def render(path, out_path, duration, g={}, fps=30, R=44100, **kw):
     kw['nowindow']= True
     
     run = HotPluggableUI(**kw)
@@ -180,9 +181,7 @@ def render(path, out_path, duration, g={}, **kw):
 
     load()
 
-    # TODO: expose
-    FPS = 30
-    R = 44100
+    FPS = fps
     CHUNK_LEN = R / FPS         # XXX: integer assert?
     audio_chunks = []
     nframes = int(duration * FPS)
@@ -216,7 +215,7 @@ def render(path, out_path, duration, g={}, **kw):
 
             # Merge files
             # TODO: expose in media.py
-            subprocess.call([media.FFMPEG,
+            subprocess.call([get_ffmpeg(),
                              '-y',
                              '-i', v_fh.name,
                              '-i', a_fh.name,
