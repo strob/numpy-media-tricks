@@ -206,14 +206,17 @@ def np2video(np, *a, **kw):
             yield fr
     return frames_to_video(vgen(), *a, **kw)
 
-def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0, ffopts=[]):
+def sound_chunks(path, chunksize=2048, R=44100, nchannels=2, start=0, duration=None, ffopts=[]):
     # XXX: endianness EEK
     # TODO: detect platform endianness & adjust ffmpeg params accordingly
 
+    dur_opts = []
+    if duration is not None:
+        dur_opts = ['-t', str(duration)]
+
     cmd = [get_ffmpeg(), 
            '-ss', "%f" % (start), 
-           '-i', path, 
-           '-ss', "%f" % (start), 
+           '-i', path] + dur_opts + [
            '-vn',
            '-ar', str(R), 
            '-ac', str(nchannels), 
