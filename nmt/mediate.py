@@ -5,7 +5,8 @@ import numpy as np
 import sdl2
 import sdl2.ext                 # Maybe I shouldn't use `ext'?
 
-from .media import FFMPEG, _video_info, webcam_reader
+from . import get_ffmpeg
+from .media import _video_info, webcam_reader
 import subprocess
 
 KEYMAP = dict([(getattr(sdl2, X), X.split("_")[-1]) for X in dir(sdl2) if X.startswith("SDLK_")])
@@ -75,7 +76,7 @@ class ArrayUI:
         self._v_in = p
 
     def _init_spoof_video_in(self):
-        self._v_in = subprocess.Popen([FFMPEG,
+        self._v_in = subprocess.Popen([get_ffmpeg(),
                     "-i", self.spoof_webcam,# "-r", "60", (XXX: How to deal with speed?)
                     '-vf', 'scale=%d:%d'%(self.in_size[0],self.in_size[1]),
                     '-an',
