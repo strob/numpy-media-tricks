@@ -197,7 +197,7 @@ def render(path, out_path, duration, g={}, fps=30, R=44100, **kw):
                 a_fr = np.zeros((CHUNK_LEN, 2), dtype=np.int16)
                 
                 if v_frame_writer is None:
-                    v_frame_writer = media.frame_writer(v_fr, v_fh.name, fps=FPS)
+                    v_frame_writer = media.frame_writer(v_fr, v_fh.name, fps=FPS, ffopts=['-pix_fmt', 'yuv420p'])
                 if a_frame_writer is None:
                     a_frame_writer = media.chunk_writer(a_fr, a_fh.name, R=R)
 

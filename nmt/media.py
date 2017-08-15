@@ -127,14 +127,17 @@ def _infer_size(path, width, height, preamble=[]):
 
     return (width, height)
 
-def frame_reader(path, height=None, width=None, start=0, fps=30, colororder='rgb', bitrate='24', preamble=[]):
+def frame_reader(path, height=None, width=None, start=0, fps=30, duration=None, colororder='rgb', bitrate='24', preamble=[]):
     # low-level ffmpeg wrapper
     width, height = _infer_size(path, width, height, preamble=preamble)
 
+    dur_opts = []
+    if duration is not None:
+        dur_opts = ['-t', str(duration)]
+
     cmd = [get_ffmpeg()] + preamble + [
            '-ss', "%f" % (start),
-           '-i', path, 
-           '-ss', "%f" % (start),
+           '-i', path] + dur_opts + [
            '-vf', 'scale=%d:%d'%(width,height),
            '-r', str(fps),
            '-an',
