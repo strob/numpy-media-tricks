@@ -101,6 +101,12 @@ def _video_info(stderr):
     if rot_match:
         out["rotation"] = float(rot_match.groups()[0])
 
+    # ... look for timecode
+    # creation_time   : 2018-03-21T13:26:13.000000Z
+    ctime_match = re.search(r'creation_time\s+:\s+([\d\-T\:\.]+Z)', stderr)
+    if ctime_match:
+        out['creation_time'] = ctime_match.groups()[0]    
+
     return out
 
 def video_info(path, preamble=[]):
