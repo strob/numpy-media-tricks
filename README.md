@@ -8,7 +8,7 @@
 You need SDL and FFmpeg installed, system-wide
 
 ```sh
-(apt-get|brew) install sdl2 ffmpeg
+(apt-get|brew) install sdl2 ffmpeg portaudio
 pip install -r requirements.txt
 sudo python setup.py install
 ```
