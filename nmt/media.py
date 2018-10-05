@@ -188,9 +188,8 @@ def webcam_frames(*a, **kw):
 def video2np(path, **kw):
     return np.array([X for X in video_frames(path, **kw)])
 
-def frame_writer(first_frame, path, fps=30, ffopts=[]):
-    fr = first_frame
-    cmd =[get_ffmpeg(), '-y', '-s', '%dx%d' % (fr.shape[1], fr.shape[0]),
+def frame_writer(width, height, path, fps=30, ffopts=[]):
+    cmd =[get_ffmpeg(), '-y', '-s', '%dx%d' % (width, height),
           '-r', str(fps), 
           '-an',
           '-pix_fmt', 'rgb24',
@@ -203,7 +202,7 @@ def frames_to_video(generator, *a, **kw):
     p = None 
     for fr in generator:
         if p is None:
-            p = frame_writer(fr, *a, **kw)
+            p = frame_writer(fr.shape[1], fr.shape[0], *a, **kw)
         p.stdin.write(fr.tostring())
     p.stdin.close()
     print('done generating video')
