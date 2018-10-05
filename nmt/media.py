@@ -249,8 +249,7 @@ def sound2np(path, **kw):
     """
     return np.concatenate([x for x in sound_chunks(path, **kw)])
 
-def chunk_writer(first_chunk, path, R=44100, ffopts=[]):
-    nchannels = first_chunk.shape[1] if len(first_chunk.shape) > 1 else 1
+def chunk_writer(nchannels, path, R=44100, ffopts=[]):
     cmd =[get_ffmpeg(), '-y',
           '-vn',
           '-ar', str(R),
@@ -265,7 +264,8 @@ def chunks_to_sound(generator, *a, **kw):
     p = None 
     for ch in generator:
         if p is None:
-            p = chunk_writer(ch, *a, **kw)
+            nchannels = ch.shape[1] if len(ch.shape) > 1 else 1
+            p = chunk_writer(nchannels, *a, **kw)
         p.stdin.write(ch.tostring())
     p.stdin.close()
     print('done generating sound')
