@@ -87,7 +87,11 @@ class ArrayUI:
         sdl2.SDL_SetWindowFullscreen(self._win.window, 0)
 
     def _init_mic(self):
-        import pyaudio
+        try:
+            import pyaudio
+        except ImportError:
+            print("No mic; ok.")
+            return
 
         p = pyaudio.PyAudio()
         self._mic = p.open(
