@@ -34,6 +34,7 @@ class ArrayUI:
         chunksize=1024,
         webcam="",
         spoof_webcam=None,
+        spoof_mouse=False,
         nowindow=False,
         fullscreen=False,
     ):
@@ -45,6 +46,7 @@ class ArrayUI:
         self.nchannels = nchannels
         self.webcam = webcam
         self.spoof_webcam = spoof_webcam
+        self.spoof_mouse = spoof_mouse
         self.fullscreen = fullscreen
 
         if not nowindow:
@@ -204,40 +206,45 @@ class ArrayUI:
 
     def _handle_event(self, ev):
         if hasattr(self, "mouse_in"):
-            if ev.type == sdl2.SDL_MOUSEMOTION:
-                self.mouse_in("mouse-move", ev.motion.x, ev.motion.y, None)
-            elif ev.type == sdl2.SDL_MOUSEBUTTONDOWN:
-                self.mouse_in("mouse-button-press", ev.motion.x, ev.motion.y, ev.button)
-            elif ev.type == sdl2.SDL_MOUSEBUTTONUP:
-                self.mouse_in(
-                    "mouse-button-release", ev.motion.x, ev.motion.y, ev.button
-                )
-            # Add touch events as if they were mouse events (...)
 
-            # This is dubious: on the Mac, the coordinates are
-            # relative to the trackpad, not the cursor position.
+            if self.spoof_mouse:
+                # Add touch events as if they were mouse events (...)
 
-            elif ev.type == sdl2.SDL_FINGERDOWN:
-                self.mouse_in(
-                    "mouse-button-press",
-                    int(self.size[0] * ev.tfinger.x),
-                    int(self.size[1] * ev.tfinger.y),
-                    ev.tfinger.touchId,
-                )
-            elif ev.type == sdl2.SDL_FINGERUP:
-                self.mouse_in(
-                    "mouse-button-release",
-                    int(self.size[0] * ev.tfinger.x),
-                    int(self.size[1] * ev.tfinger.y),
-                    ev.tfinger.touchId,
-                )
-            elif ev.type == sdl2.SDL_FINGERMOTION:
-                self.mouse_in(
-                    "mouse-move",
-                    int(self.size[0] * ev.tfinger.x),
-                    int(self.size[1] * ev.tfinger.y),
-                    ev.tfinger.touchId,
-                )
+                # This is dubious: on the Mac, the coordinates are
+                # relative to the trackpad, not the cursor position.
+
+                if ev.type == sdl2.SDL_FINGERDOWN:
+                    self.mouse_in(
+                        "mouse-button-press",
+                        int(self.size[0] * ev.tfinger.x),
+                        int(self.size[1] * ev.tfinger.y),
+                        ev.tfinger.touchId,
+                    )
+                elif ev.type == sdl2.SDL_FINGERUP:
+                    self.mouse_in(
+                        "mouse-button-release",
+                        int(self.size[0] * ev.tfinger.x),
+                        int(self.size[1] * ev.tfinger.y),
+                        ev.tfinger.touchId,
+                    )
+                elif ev.type == sdl2.SDL_FINGERMOTION:
+                    self.mouse_in(
+                        "mouse-move",
+                        int(self.size[0] * ev.tfinger.x),
+                        int(self.size[1] * ev.tfinger.y),
+                        ev.tfinger.touchId,
+                    )
+            else:
+                if ev.type == sdl2.SDL_MOUSEMOTION:
+                    self.mouse_in("mouse-move", ev.motion.x, ev.motion.y, None)
+                elif ev.type == sdl2.SDL_MOUSEBUTTONDOWN:
+                    self.mouse_in(
+                        "mouse-button-press", ev.motion.x, ev.motion.y, ev.button
+                    )
+                elif ev.type == sdl2.SDL_MOUSEBUTTONUP:
+                    self.mouse_in(
+                        "mouse-button-release", ev.motion.x, ev.motion.y, ev.button
+                    )
 
         if hasattr(self, "keyboard_in"):
             if ev.type == sdl2.SDL_KEYDOWN:
