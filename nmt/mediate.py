@@ -148,8 +148,9 @@ class ArrayUI:
     def _handle_audio_cb(self, _udata, cbuf, N):
         # Read from mic
         if hasattr(self, "audio_in"):
-            in_buf = np.fromstring(self._mic.read(self.chunksize), dtype=np.int16)
-            self.audio_in(in_buf)
+            if hasattr(self, "_mic"):
+                in_buf = np.fromstring(self._mic.read(self.chunksize), dtype=np.int16)
+                self.audio_in(in_buf)
 
         # ...and output
         arr = np.ctypeslib.as_array(cbuf, shape=(N,)).view(np.int16)
