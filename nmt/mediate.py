@@ -221,23 +221,20 @@ class ArrayUI:
                 if ev.type == sdl2.SDL_FINGERDOWN:
                     self.mouse_in(
                         "mouse-button-press",
-                        int(self.size[0] * ev.tfinger.x),
-                        int(self.size[1] * ev.tfinger.y),
+                        ev.tfinger.x,
+                        ev.tfinger.y,
                         ev.tfinger.touchId,
                     )
                 elif ev.type == sdl2.SDL_FINGERUP:
                     self.mouse_in(
                         "mouse-button-release",
-                        int(self.size[0] * ev.tfinger.x),
-                        int(self.size[1] * ev.tfinger.y),
+                        ev.tfinger.x,
+                        ev.tfinger.y,
                         ev.tfinger.touchId,
                     )
                 elif ev.type == sdl2.SDL_FINGERMOTION:
                     self.mouse_in(
-                        "mouse-move",
-                        int(self.size[0] * ev.tfinger.x),
-                        int(self.size[1] * ev.tfinger.y),
-                        ev.tfinger.touchId,
+                        "mouse-move", ev.tfinger.x, ev.tfinger.y, ev.tfinger.touchId
                     )
             else:
                 if ev.type == sdl2.SDL_MOUSEMOTION:
