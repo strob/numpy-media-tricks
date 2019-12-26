@@ -141,7 +141,7 @@ class ArrayUI:
 
     def _handle_audio_cb(self, _udata, cbuf, N):
         # Read from mic
-        if hasattr(self, "audio_in") and hasattr(self, "_mic"):
+        if hasattr(self, "audio_in"):
             in_buf = np.fromstring(self._mic.read(self.chunksize), dtype=np.int16)
             self.audio_in(in_buf)
 
@@ -213,6 +213,10 @@ class ArrayUI:
                     "mouse-button-release", ev.motion.x, ev.motion.y, ev.button
                 )
             # Add touch events as if they were mouse events (...)
+
+            # This is dubious: on the Mac, the coordinates are
+            # relative to the trackpad, not the cursor position.
+
             elif ev.type == sdl2.SDL_FINGERDOWN:
                 self.mouse_in(
                     "mouse-button-press",
