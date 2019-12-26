@@ -213,20 +213,26 @@ class ArrayUI:
                     "mouse-button-release", ev.motion.x, ev.motion.y, ev.button
                 )
             # Add touch events as if they were mouse events (...)
-            if ev.type == sdl2.SDL_FINGERDOWN:
+            elif ev.type == sdl2.SDL_FINGERDOWN:
                 self.mouse_in(
-                    "mouse-button-press", ev.tfinger.x, ev.tfinger.y, ev.tfinger.touchId
-                )
-            if ev.type == sdl2.SDL_FINGERUP:
-                self.mouse_in(
-                    "mouse-button-release",
-                    ev.tfinger.x,
-                    ev.tfinger.y,
+                    "mouse-button-press",
+                    int(self.size[0] * ev.tfinger.x),
+                    int(self.size[1] * ev.tfinger.y),
                     ev.tfinger.touchId,
                 )
-            if ev.type == sdl2.SDL_FINGERMOTION:
+            elif ev.type == sdl2.SDL_FINGERUP:
                 self.mouse_in(
-                    "mouse-move", ev.tfinger.x, ev.tfinger.y, ev.tfinger.touchId
+                    "mouse-button-release",
+                    int(self.size[0] * ev.tfinger.x),
+                    int(self.size[1] * ev.tfinger.y),
+                    ev.tfinger.touchId,
+                )
+            elif ev.type == sdl2.SDL_FINGERMOTION:
+                self.mouse_in(
+                    "mouse-move",
+                    int(self.size[0] * ev.tfinger.x),
+                    int(self.size[1] * ev.tfinger.y),
+                    ev.tfinger.touchId,
                 )
 
         if hasattr(self, "keyboard_in"):
