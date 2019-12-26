@@ -9,6 +9,7 @@ import sdl2.ext  # Maybe I shouldn't use `ext'?
 from . import get_ffmpeg
 from .media import _video_info, webcam_reader
 import subprocess
+import traceback
 
 KEYMAP = dict(
     [(getattr(sdl2, X), X.split("_")[-1]) for X in dir(sdl2) if X.startswith("SDLK_")]
@@ -271,6 +272,38 @@ def multi_run(ns):
                 pass
         for n in ns:
             n._update_av()
+
+
+class HotPluggableUI(ArrayUI):
+    def __init__(self, *a, **kw):
+        self.cbs = {}
+        ArrayUI.__init__(self, *a, **kw)
+
+    def _do_thing(self, name, *a):
+        if name in self.cbs:
+            try:
+                self.cbs[name](*a)
+                return True
+            except:
+                del self.cbs[name]
+                traceback.print_exc()
+        return False
+
+    def video_out(self, *a):
+        self._do_thing("video_out", *a)
+
+    def audio_out(self, a):
+        if not self._do_thing("audio_out", a):
+            a[:] = 0
+
+    def audio_in(self, a):
+        self._do_thing("audio_in", a)
+
+    def mouse_in(self, *a):
+        self._do_thing("mouse_in", *a)
+
+    def keyboard_in(self, *a):
+        self._do_thing("keyboard_in", *a)
 
 
 class TestUI(ArrayUI):
