@@ -168,7 +168,7 @@ class ArrayUI:
         import sys
 
         if sys.platform == "darwin":
-            nsamples /= 2
+            nsamples = int(nsamples / 2)
 
         self._audio_spec = sdl2.SDL_AudioSpec(
             self.R,
