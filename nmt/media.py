@@ -114,7 +114,7 @@ def video_info(path, preamble=[]):
     p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
 
-    return _video_info(stderr)
+    return _video_info(stderr.decode('utf-8'))
 
 def _infer_size(path, width, height, preamble=[]):
     def div4(i):
